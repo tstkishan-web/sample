@@ -3,157 +3,431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
+  <title>Admin Dashboard</title>
 
   <style>
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .layout {
       display: flex;
-      justify-content: center;
-      align-items: center;
       min-height: 100vh;
     }
 
-    .login-container {
-      width: 100%;
-      max-width: 400px;
-      padding: 30px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    .sidebar {
+      width: 240px;
+      background: #111827;
+      color: white;
+      padding: 24px 16px;
     }
 
-    h1 {
-      text-align: center;
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 35px;
+      padding: 0 12px;
+    }
+
+    .nav-item {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      color: #d1d5db;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: #2563eb;
+      color: white;
+    }
+
+    .main {
+      flex: 1;
+      padding: 25px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 25px;
     }
 
-    .form-group {
-      margin-bottom: 18px;
+    .header h1 {
+      font-size: 28px;
     }
 
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-weight: 600;
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #2563eb;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       background: #2563eb;
       color: white;
-      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      padding: 9px 15px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
       cursor: pointer;
     }
 
-    button:hover {
-      background: #1d4ed8;
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 25px;
     }
 
-    .error {
-      display: none;
-      margin-top: 15px;
-      color: #dc2626;
-      text-align: center;
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
-    .success {
-      display: none;
-      margin-top: 15px;
-      color: #16a34a;
-      text-align: center;
+    .card-title {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: white;
+      padding: 22px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .panel h2 {
+      margin-bottom: 18px;
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 13px 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .status {
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .completed {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .activity {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .activity:last-child {
+      border-bottom: none;
+    }
+
+    .activity-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .activity-time {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .search {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 900px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        width: 190px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .layout {
+        display: block;
+      }
+
+      .sidebar {
+        width: 100%;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        align-items: flex-start;
+        gap: 15px;
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="login-container">
-    <h1>Login</h1>
+  <div class="layout">
 
-    <form id="loginForm">
+    <aside class="sidebar">
+      <div class="logo">MyDashboard</div>
 
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="Enter your email"
-          autocomplete="email"
-          required
-        />
-      </div>
+      <nav>
+        <a href="#" id="dashboardLink" class="nav-item active">Dashboard</a>
+        <a href="#" id="usersLink" class="nav-item">Users</a>
+        <a href="#" id="ordersLink" class="nav-item">Orders</a>
+        <a href="#" id="reportsLink" class="nav-item">Reports</a>
+        <a href="#" id="settingsLink" class="nav-item">Settings</a>
+      </nav>
+    </aside>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Enter your password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
+    <main class="main">
 
-      <button type="submit" id="loginButton">
-        Login
-      </button>
+      <header class="header">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p>Welcome back, Admin.</p>
+        </div>
 
-      <div id="errorMessage" class="error">
-        Invalid email or password.
-      </div>
+        <div class="user-section">
+          <div class="avatar" id="userAvatar">A</div>
+          <span id="username">Admin User</span>
+          <button class="logout-btn" id="logoutButton">
+            Logout
+          </button>
+        </div>
+      </header>
 
-      <div id="successMessage" class="success">
-        Login successful!
-      </div>
+      <input
+        type="text"
+        id="searchInput"
+        class="search"
+        placeholder="Search users..."
+      />
 
-    </form>
+      <section class="cards">
+
+        <div class="card" id="usersCard">
+          <div class="card-title">Total Users</div>
+          <div class="card-value" id="totalUsers">1,248</div>
+        </div>
+
+        <div class="card" id="ordersCard">
+          <div class="card-title">Total Orders</div>
+          <div class="card-value" id="totalOrders">856</div>
+        </div>
+
+        <div class="card" id="revenueCard">
+          <div class="card-title">Revenue</div>
+          <div class="card-value" id="totalRevenue">$24,580</div>
+        </div>
+
+        <div class="card" id="pendingCard">
+          <div class="card-title">Pending Orders</div>
+          <div class="card-value" id="pendingOrders">32</div>
+        </div>
+
+      </section>
+
+      <section class="content">
+
+        <div class="panel">
+          <h2>Recent Orders</h2>
+
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>#1001</td>
+                <td>John Smith</td>
+                <td>$120</td>
+                <td>
+                  <span class="status completed">Completed</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>#1002</td>
+                <td>Sarah Wilson</td>
+                <td>$85</td>
+                <td>
+                  <span class="status pending">Pending</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>#1003</td>
+                <td>David Brown</td>
+                <td>$210</td>
+                <td>
+                  <span class="status failed">Failed</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>#1004</td>
+                <td>Emily Davis</td>
+                <td>$150</td>
+                <td>
+                  <span class="status completed">Completed</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h2>Recent Activity</h2>
+
+          <div class="activity" id="activity1">
+            <div class="activity-title">
+              New user registered
+            </div>
+            <div class="activity-time">
+              5 minutes ago
+            </div>
+          </div>
+
+          <div class="activity" id="activity2">
+            <div class="activity-title">
+              Order #1004 completed
+            </div>
+            <div class="activity-time">
+              20 minutes ago
+            </div>
+          </div>
+
+          <div class="activity" id="activity3">
+            <div class="activity-title">
+              Payment received
+            </div>
+            <div class="activity-time">
+              1 hour ago
+            </div>
+          </div>
+
+          <div class="activity" id="activity4">
+            <div class="activity-title">
+              New report generated
+            </div>
+            <div class="activity-time">
+              2 hours ago
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
   </div>
 
   <script>
-    const form = document.getElementById("loginForm");
-    const errorMessage = document.getElementById("errorMessage");
-    const successMessage = document.getElementById("successMessage");
+    const searchInput = document.getElementById("searchInput");
+    const ordersTable = document.getElementById("ordersTable");
 
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
+    searchInput.addEventListener("input", function () {
+      const searchValue = this.value.toLowerCase();
+      const rows = ordersTable.querySelectorAll("tbody tr");
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      rows.forEach(function (row) {
+        const text = row.textContent.toLowerCase();
 
-      errorMessage.style.display = "none";
-      successMessage.style.display = "none";
-
-      if (email === "test@example.com" && password === "Test@123") {
-        successMessage.style.display = "block";
-      } else {
-        errorMessage.style.display = "block";
-      }
+        row.style.display = text.includes(searchValue)
+          ? ""
+          : "none";
+      });
     });
+
+    document
+      .getElementById("logoutButton")
+      .addEventListener("click", function () {
+        alert("You have been logged out.");
+      });
   </script>
 
 </body>
