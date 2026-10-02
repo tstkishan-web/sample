@@ -1,0 +1,339 @@
+From 127169eafca6d2dcc680deff0f0d8c7a760023bb Mon Sep 17 00:00:00 2001
+From: tstkishan-web <tstkishan@gmail.com>
+Date: Fri, 2 Oct 2026 06:34:46 +0000
+Subject: [PATCH] Add order status filter, empty state, nav switching and
+ logout confirmation modal
+
+---
+ index.html | 229 ++++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 201 insertions(+), 28 deletions(-)
+
+diff --git a/index.html b/index.html
+index cd86ad9..c74ab08 100644
+--- a/index.html
++++ b/index.html
+@@ -205,6 +205,96 @@
+       margin-bottom: 15px;
+     }
+ 
++    .toolbar {
++      display: flex;
++      gap: 10px;
++      margin-bottom: 15px;
++    }
++
++    .toolbar .search {
++      flex: 1;
++      margin-bottom: 0;
++    }
++
++    .status-filter,
++    .clear-btn {
++      padding: 11px;
++      border: 1px solid #ddd;
++      border-radius: 6px;
++      background: white;
++      cursor: pointer;
++    }
++
++    .results-count {
++      font-size: 13px;
++      color: #6b7280;
++      margin-bottom: 10px;
++    }
++
++    .empty-state {
++      display: none;
++      padding: 20px;
++      text-align: center;
++      color: #6b7280;
++    }
++
++    .modal-overlay {
++      display: none;
++      position: fixed;
++      inset: 0;
++      background: rgba(0, 0, 0, 0.45);
++      align-items: center;
++      justify-content: center;
++      z-index: 10;
++    }
++
++    .modal-overlay.open {
++      display: flex;
++    }
++
++    .modal {
++      background: white;
++      padding: 24px;
++      border-radius: 10px;
++      width: 90%;
++      max-width: 380px;
++    }
++
++    .modal h3 {
++      margin-bottom: 10px;
++    }
++
++    .modal-actions {
++      display: flex;
++      justify-content: flex-end;
++      gap: 10px;
++      margin-top: 20px;
++    }
++
++    .btn {
++      padding: 9px 15px;
++      border-radius: 6px;
++      border: 1px solid #ddd;
++      background: white;
++      cursor: pointer;
++    }
++
++    .btn-danger {
++      background: #dc2626;
++      border-color: #dc2626;
++      color: white;
++    }
++
++    .logged-out-banner {
++      display: none;
++      padding: 12px 15px;
++      margin-bottom: 15px;
++      border-radius: 6px;
++      background: #dcfce7;
++      color: #166534;
++      font-weight: bold;
++    }
++
+     @media (max-width: 900px) {
+       .cards {
+         grid-template-columns: repeat(2, 1fr);
+@@ -249,11 +339,11 @@
+       <div class="logo">MyDashboard</div>
+ 
+       <nav>
+-        <a href="#" id="dashboardLink" class="nav-item active">Dashboard</a>
+-        <a href="#" id="usersLink" class="nav-item">Users</a>
+-        <a href="#" id="ordersLink" class="nav-item">Orders</a>
+-        <a href="#" id="reportsLink" class="nav-item">Reports</a>
+-        <a href="#" id="settingsLink" class="nav-item">Settings</a>
++        <a href="#" id="dashboardLink" data-testid="nav-dashboard" data-section="Dashboard" class="nav-item active">Dashboard</a>
++        <a href="#" id="usersLink" data-testid="nav-users" data-section="Users" class="nav-item">Users</a>
++        <a href="#" id="ordersLink" data-testid="nav-orders" data-section="Orders" class="nav-item">Orders</a>
++        <a href="#" id="reportsLink" data-testid="nav-reports" data-section="Reports" class="nav-item">Reports</a>
++        <a href="#" id="settingsLink" data-testid="nav-settings" data-section="Settings" class="nav-item">Settings</a>
+       </nav>
+     </aside>
+ 
+@@ -261,25 +351,42 @@
+ 
+       <header class="header">
+         <div>
+-          <h1 id="pageTitle">Dashboard</h1>
++          <h1 id="pageTitle" data-testid="page-title">Dashboard</h1>
+           <p>Welcome back, Admin.</p>
+         </div>
+ 
+         <div class="user-section">
+           <div class="avatar" id="userAvatar">A</div>
+           <span id="username">Admin User</span>
+-          <button class="logout-btn" id="logoutButton">
++          <button class="logout-btn" id="logoutButton" data-testid="logout-button">
+             Logout
+           </button>
+         </div>
+       </header>
+ 
+-      <input
+-        type="text"
+-        id="searchInput"
+-        class="search"
+-        placeholder="Search users..."
+-      />
++      <div class="logged-out-banner" id="loggedOutBanner" data-testid="logged-out-banner" role="status">
++        You have been logged out.
++      </div>
++
++      <div class="toolbar">
++        <input
++          type="text"
++          id="searchInput"
++          data-testid="search-input"
++          class="search"
++          placeholder="Search orders by ID, customer or amount..."
++          aria-label="Search orders"
++        />
++
++        <select id="statusFilter" data-testid="status-filter" class="status-filter" aria-label="Filter by status">
++          <option value="all">All statuses</option>
++          <option value="completed">Completed</option>
++          <option value="pending">Pending</option>
++          <option value="failed">Failed</option>
++        </select>
++
++        <button id="clearFilters" data-testid="clear-filters" class="clear-btn">Clear</button>
++      </div>
+ 
+       <section class="cards">
+ 
+@@ -310,7 +417,9 @@
+         <div class="panel">
+           <h2>Recent Orders</h2>
+ 
+-          <table id="ordersTable">
++          <div class="results-count" id="resultsCount" data-testid="results-count">Showing 4 of 4 orders</div>
++
++          <table id="ordersTable" data-testid="orders-table">
+             <thead>
+               <tr>
+                 <th>Order ID</th>
+@@ -321,7 +430,7 @@
+             </thead>
+ 
+             <tbody>
+-              <tr>
++              <tr data-status="completed" data-testid="order-row-1001">
+                 <td>#1001</td>
+                 <td>John Smith</td>
+                 <td>$120</td>
+@@ -330,7 +439,7 @@
+                 </td>
+               </tr>
+ 
+-              <tr>
++              <tr data-status="pending" data-testid="order-row-1002">
+                 <td>#1002</td>
+                 <td>Sarah Wilson</td>
+                 <td>$85</td>
+@@ -339,7 +448,7 @@
+                 </td>
+               </tr>
+ 
+-              <tr>
++              <tr data-status="failed" data-testid="order-row-1003">
+                 <td>#1003</td>
+                 <td>David Brown</td>
+                 <td>$210</td>
+@@ -348,7 +457,7 @@
+                 </td>
+               </tr>
+ 
+-              <tr>
++              <tr data-status="completed" data-testid="order-row-1004">
+                 <td>#1004</td>
+                 <td>Emily Davis</td>
+                 <td>$150</td>
+@@ -358,6 +467,10 @@
+               </tr>
+             </tbody>
+           </table>
++
++          <div class="empty-state" id="emptyState" data-testid="empty-state">
++            No orders match your search.
++          </div>
+         </div>
+ 
+         <div class="panel">
+@@ -406,28 +519,88 @@
+ 
+   </div>
+ 
++  <div class="modal-overlay" id="logoutModal" data-testid="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
++    <div class="modal">
++      <h3 id="logoutModalTitle">Log out?</h3>
++      <p>Are you sure you want to log out of MyDashboard?</p>
++      <div class="modal-actions">
++        <button class="btn" id="cancelLogout" data-testid="cancel-logout">Cancel</button>
++        <button class="btn btn-danger" id="confirmLogout" data-testid="confirm-logout">Log out</button>
++      </div>
++    </div>
++  </div>
++
+   <script>
+     const searchInput = document.getElementById("searchInput");
++    const statusFilter = document.getElementById("statusFilter");
++    const clearFilters = document.getElementById("clearFilters");
+     const ordersTable = document.getElementById("ordersTable");
++    const resultsCount = document.getElementById("resultsCount");
++    const emptyState = document.getElementById("emptyState");
+ 
+-    searchInput.addEventListener("input", function () {
+-      const searchValue = this.value.toLowerCase();
++    function applyFilters() {
++      const searchValue = searchInput.value.trim().toLowerCase();
++      const status = statusFilter.value;
+       const rows = ordersTable.querySelectorAll("tbody tr");
++      let visible = 0;
+ 
+       rows.forEach(function (row) {
+-        const text = row.textContent.toLowerCase();
++        const matchesText = row.textContent.toLowerCase().includes(searchValue);
++        const matchesStatus = status === "all" || row.dataset.status === status;
++        const show = matchesText && matchesStatus;
+ 
+-        row.style.display = text.includes(searchValue)
+-          ? ""
+-          : "none";
++        row.style.display = show ? "" : "none";
++        if (show) visible++;
+       });
++
++      resultsCount.textContent = "Showing " + visible + " of " + rows.length + " orders";
++      emptyState.style.display = visible === 0 ? "block" : "none";
++    }
++
++    searchInput.addEventListener("input", applyFilters);
++    statusFilter.addEventListener("change", applyFilters);
++
++    clearFilters.addEventListener("click", function () {
++      searchInput.value = "";
++      statusFilter.value = "all";
++      applyFilters();
+     });
+ 
+-    document
+-      .getElementById("logoutButton")
+-      .addEventListener("click", function () {
+-        alert("You have been logged out.");
++    // Sidebar navigation: update active item and page title
++    document.querySelectorAll(".nav-item").forEach(function (link) {
++      link.addEventListener("click", function (event) {
++        event.preventDefault();
++        document.querySelectorAll(".nav-item").forEach(function (item) {
++          item.classList.remove("active");
++        });
++        link.classList.add("active");
++        document.getElementById("pageTitle").textContent = link.dataset.section;
+       });
++    });
++
++    // Logout now asks for confirmation instead of a browser alert
++    const logoutModal = document.getElementById("logoutModal");
++    const logoutButton = document.getElementById("logoutButton");
++
++    logoutButton.addEventListener("click", function () {
++      logoutModal.classList.add("open");
++    });
++
++    document.getElementById("cancelLogout").addEventListener("click", function () {
++      logoutModal.classList.remove("open");
++    });
++
++    document.getElementById("confirmLogout").addEventListener("click", function () {
++      logoutModal.classList.remove("open");
++      document.getElementById("loggedOutBanner").style.display = "block";
++      document.getElementById("username").textContent = "Guest";
++      document.getElementById("userAvatar").textContent = "G";
++      logoutButton.disabled = true;
++    });
++
++    document.addEventListener("keydown", function (event) {
++      if (event.key === "Escape") logoutModal.classList.remove("open");
++    });
+   </script>
+ 
+ </body>
+-- 
+2.43.0
+
